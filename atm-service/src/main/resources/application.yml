@@ -1,0 +1,43 @@
+server:
+  port: ${ATM_SERVICE_PORT:8080}
+  shutdown: graceful
+
+spring:
+  application:
+    name: atm-service
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  datasource:
+    url: jdbc:h2:mem:atm;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 20
+  sql:
+    init:
+      mode: always
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: false
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+atm:
+  log-dir: ${ATM_LOG_DIR:logs}

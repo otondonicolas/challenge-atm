@@ -1,0 +1,14 @@
+INSERT INTO tarjeta (numero, activa) VALUES ('4517660000000001', 'S');
+INSERT INTO tarjeta (numero, activa) VALUES ('4517660000000002', 'S');
+INSERT INTO tarjeta (numero, activa) VALUES ('4517660000000003', 'N');
+
+INSERT INTO cuenta (numero, cbu, saldo) VALUES ('1000000001', '0170001100000000000001', 150000.00);
+INSERT INTO cuenta (numero, cbu, saldo) VALUES ('1000000002', '0170001100000000000002', 2500.50);
+INSERT INTO cuenta (numero, cbu, saldo) VALUES ('1000000003', '0170001100000000000003', 10000.00);
+INSERT INTO cuenta (numero, cbu, saldo) VALUES ('1000000004', '0170001100000000000004', 50000.00);
+INSERT INTO cuenta (numero, cbu, saldo) VALUES ('1000000005', '0170001100000000000005', 0.00);
+
+INSERT INTO tarjeta_cuenta (tarjeta, cuenta) VALUES ('4517660000000001', '1000000001');
+INSERT INTO tarjeta_cuenta (tarjeta, cuenta) VALUES ('4517660000000001', '1000000002');
+INSERT INTO tarjeta_cuenta (tarjeta, cuenta) VALUES ('4517660000000002', '1000000003');
+INSERT INTO tarjeta_cuenta (tarjeta, cuenta) VALUES ('4517660000000003', '1000000004');

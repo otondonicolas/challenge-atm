@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="LOG_DIR" source="atm.log-dir" defaultValue="logs"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [requestId=%X{requestId:-}] %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="APLICACION" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/atm-service.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/atm-service.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [requestId=%X{requestId:-}] %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="TRANSACCIONES" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/transacciones.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/transacciones.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>3650</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <immediateFlush>true</immediateFlush>
+    </appender>
+
+    <logger name="AUDITORIA_TRANSACCIONAL" level="INFO" additivity="false">
+        <appender-ref ref="TRANSACCIONES"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="APLICACION"/>
+    </root>
+</configuration>
