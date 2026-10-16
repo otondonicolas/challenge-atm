@@ -1,4 +1,4 @@
-package com.challenge.atm.cli;
+package com.challenge.atm.cli.exception;
 
 public class ServicioNoDisponibleException extends RuntimeException {
 

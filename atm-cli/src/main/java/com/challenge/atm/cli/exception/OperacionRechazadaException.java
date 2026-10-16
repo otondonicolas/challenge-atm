@@ -1,4 +1,4 @@
-package com.challenge.atm.cli;
+package com.challenge.atm.cli.exception;
 
 import java.util.Collections;
 import java.util.List;

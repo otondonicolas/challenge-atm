@@ -10,7 +10,7 @@ Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8. Fec
 [INFO] Tests run: 3,  Failures: 0, Errors: 0 - AuditoriaTransaccionalIntegrationTest
 [INFO] Tests run: 3,  Failures: 0, Errors: 0 - RegistroTransaccionTest
 [INFO] Tests run: 10, Failures: 0, Errors: 0 - CuentaTest
-[INFO] Tests run: 4,  Failures: 0, Errors: 0 - CajeroServiceTest
+[INFO] Tests run: 4,  Failures: 0, Errors: 0 - CajeroServiceImplTest
 [INFO] Tests run: 2,  Failures: 0, Errors: 0 - ConcurrenciaExtraccionTest
 [INFO] Tests run: 24, Failures: 0, Errors: 0 - CajeroControllerIntegrationTest
 [INFO] Tests run: 46, Failures: 0, Errors: 0, Skipped: 0
@@ -21,7 +21,7 @@ Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8. Fec
 |---|---|---|
 | `CuentaTest` | Unitario | Débito, crédito, saldo en cero, saldo insuficiente sin modificar la cuenta, importes inválidos (0, negativos, 3 decimales, nulo) |
 | `RegistroTransaccionTest` | Unitario | Enmascarado de tarjetas de 16 y 19 dígitos |
-| `CajeroServiceTest` | Unitario (Mockito) | Se audita lo aprobado (con saldos), lo rechazado y los errores inesperados; las excepciones se propagan |
+| `CajeroServiceImplTest` | Unitario (Mockito) | Se audita lo aprobado (con saldos), lo rechazado y los errores inesperados; las excepciones se propagan |
 | `CajeroControllerIntegrationTest` | Integración (MockMvc + H2) | Los 4 endpoints con casos felices y de error, códigos HTTP, validación de formato, JSON mal formado, 404/405, propagación de `X-Request-Id`, health check |
 | `ConcurrenciaExtraccionTest` | Integración / concurrencia | 20 hilos simultáneos: no hay saldos negativos ni actualizaciones perdidas |
 | `AuditoriaTransaccionalIntegrationTest` | Integración | El archivo `transacciones.log` contiene el registro JSON correcto, también para operaciones rechazadas, y nunca el PAN completo |
@@ -31,7 +31,7 @@ Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8. Fec
 ```text
 [INFO] Tests run: 10, Failures: 0, Errors: 0 - AtmCliTest
 [INFO] Tests run: 3,  Failures: 0, Errors: 0 - FormatoMonedaTest
-[INFO] Tests run: 7,  Failures: 0, Errors: 0 - HttpCajeroClientTest
+[INFO] Tests run: 7,  Failures: 0, Errors: 0 - CajeroClientImplTest
 [INFO] Tests run: 22, Failures: 0, Errors: 0 - ParserComandosTest
 [INFO] Tests run: 42, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
@@ -42,7 +42,7 @@ Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8. Fec
 | `ParserComandosTest` | Parseo de las 4 operaciones, cantidad de parámetros, formato de tarjeta/CBU, importes válidos e inválidos |
 | `FormatoMonedaTest` | Formato `$ 99999,99` |
 | `AtmCliTest` | Mensajes exactos del enunciado, códigos de salida, que no se llame al servicio ante un uso incorrecto, mensaje de resultado incierto |
-| `HttpCajeroClientTest` | Contra un servidor HTTP real embebido: request JSON y header `X-Request-Id`, mapeo de errores, respuestas no JSON (502), servicio caído, **timeout de lectura en extracción = resultado incierto**, timeout en consulta = no incierto |
+| `CajeroClientImplTest` | Contra un servidor HTTP real embebido: request JSON y header `X-Request-Id`, mapeo de errores, respuestas no JSON (502), servicio caído, **timeout de lectura en extracción = resultado incierto**, timeout en consulta = no incierto |
 
 ## 2. Prueba de que el test de concurrencia detecta el problema
 

@@ -1,4 +1,4 @@
-package com.challenge.atm.cli;
+package com.challenge.atm.cli.client;
 
 import java.math.BigDecimal;
 

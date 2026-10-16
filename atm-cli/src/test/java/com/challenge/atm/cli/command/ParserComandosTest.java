@@ -1,5 +1,6 @@
-package com.challenge.atm.cli;
+package com.challenge.atm.cli.command;
 
+import com.challenge.atm.cli.exception.ArgumentosInvalidosException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;

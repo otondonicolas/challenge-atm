@@ -1,4 +1,4 @@
-package com.challenge.atm.cli;
+package com.challenge.atm.cli.util;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

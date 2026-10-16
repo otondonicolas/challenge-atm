@@ -1,7 +1,5 @@
-package com.challenge.atm.service.web;
+package com.challenge.atm.service.exception;
 
-import com.challenge.atm.service.exception.CodigoError;
-import com.challenge.atm.service.exception.OperacionRechazadaException;
 import com.challenge.atm.service.web.dto.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +18,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
-public class ManejadorErrores {
+public class GlobalExceptionHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ManejadorErrores.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(OperacionRechazadaException.class)
     public ResponseEntity<ErrorResponse> operacionRechazada(OperacionRechazadaException e) {
@@ -33,7 +31,7 @@ public class ManejadorErrores {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> datosInvalidos(MethodArgumentNotValidException e) {
         List<String> detalles = e.getBindingResult().getFieldErrors().stream()
-                .map(ManejadorErrores::describir)
+                .map(GlobalExceptionHandler::describir)
                 .sorted()
                 .collect(Collectors.toList());
         LOG.warn("Solicitud invalida: {}", detalles);

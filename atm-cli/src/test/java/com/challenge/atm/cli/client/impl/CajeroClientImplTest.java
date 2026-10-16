@@ -1,5 +1,8 @@
-package com.challenge.atm.cli;
+package com.challenge.atm.cli.client.impl;
 
+import com.challenge.atm.cli.config.Configuracion;
+import com.challenge.atm.cli.exception.OperacionRechazadaException;
+import com.challenge.atm.cli.exception.ServicioNoDisponibleException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
@@ -21,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class HttpCajeroClientTest {
+class CajeroClientImplTest {
 
     private static final String TARJETA = "4517660000000001";
 
@@ -76,8 +79,8 @@ class HttpCajeroClientTest {
         return buffer.toByteArray();
     }
 
-    private HttpCajeroClient cliente() {
-        return new HttpCajeroClient(new Configuracion("http://127.0.0.1:" + servidor.getAddress().getPort(), 1000, 1000));
+    private CajeroClientImpl cliente() {
+        return new CajeroClientImpl(new Configuracion("http://127.0.0.1:" + servidor.getAddress().getPort(), 1000, 1000));
     }
 
     @Test
@@ -130,7 +133,7 @@ class HttpCajeroClientTest {
         try (ServerSocket socket = new ServerSocket(0)) {
             puertoLibre = socket.getLocalPort();
         }
-        HttpCajeroClient cliente = new HttpCajeroClient(new Configuracion("http://127.0.0.1:" + puertoLibre, 500, 500));
+        CajeroClientImpl cliente = new CajeroClientImpl(new Configuracion("http://127.0.0.1:" + puertoLibre, 500, 500));
 
         assertThatThrownBy(() -> cliente.extraer(TARJETA, "1000000001", BigDecimal.TEN))
                 .isInstanceOf(ServicioNoDisponibleException.class)

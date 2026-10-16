@@ -1,5 +1,9 @@
-package com.challenge.atm.cli;
+package com.challenge.atm.cli.client.impl;
 
+import com.challenge.atm.cli.client.CajeroClient;
+import com.challenge.atm.cli.config.Configuracion;
+import com.challenge.atm.cli.exception.OperacionRechazadaException;
+import com.challenge.atm.cli.exception.ServicioNoDisponibleException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public final class HttpCajeroClient implements CajeroClient {
+public final class CajeroClientImpl implements CajeroClient {
 
     private static final String RUTA_BASE = "/api/v1/cajero";
     private static final String HEADER_REQUEST_ID = "X-Request-Id";
@@ -27,7 +31,7 @@ public final class HttpCajeroClient implements CajeroClient {
     private final Configuracion configuracion;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public HttpCajeroClient(Configuracion configuracion) {
+    public CajeroClientImpl(Configuracion configuracion) {
         this.configuracion = configuracion;
     }
 

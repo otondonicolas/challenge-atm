@@ -1,5 +1,16 @@
 package com.challenge.atm.cli;
 
+import com.challenge.atm.cli.client.CajeroClient;
+import com.challenge.atm.cli.client.impl.CajeroClientImpl;
+import com.challenge.atm.cli.command.Comando;
+import com.challenge.atm.cli.command.ParserComandos;
+import com.challenge.atm.cli.command.TipoComando;
+import com.challenge.atm.cli.config.Configuracion;
+import com.challenge.atm.cli.exception.ArgumentosInvalidosException;
+import com.challenge.atm.cli.exception.OperacionRechazadaException;
+import com.challenge.atm.cli.exception.ServicioNoDisponibleException;
+import com.challenge.atm.cli.util.FormatoMoneda;
+
 import java.io.PrintStream;
 
 public final class AtmCli {
@@ -25,7 +36,7 @@ public final class AtmCli {
     }
 
     public static void main(String[] args) {
-        AtmCli cli = new AtmCli(new HttpCajeroClient(Configuracion.desdeEntorno()), System.out);
+        AtmCli cli = new AtmCli(new CajeroClientImpl(Configuracion.desdeEntorno()), System.out);
         System.exit(cli.ejecutar(args));
     }
 

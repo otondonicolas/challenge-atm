@@ -1,4 +1,6 @@
-package com.challenge.atm.cli;
+package com.challenge.atm.cli.command;
+
+import com.challenge.atm.cli.exception.ArgumentosInvalidosException;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;

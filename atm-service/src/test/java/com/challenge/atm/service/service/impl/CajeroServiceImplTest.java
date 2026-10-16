@@ -1,10 +1,14 @@
-package com.challenge.atm.service.service;
+package com.challenge.atm.service.service.impl;
 
 import com.challenge.atm.service.audit.AuditoriaTransaccional;
 import com.challenge.atm.service.audit.RegistroTransaccion;
 import com.challenge.atm.service.audit.ResultadoTransaccion;
 import com.challenge.atm.service.exception.CodigoError;
 import com.challenge.atm.service.exception.OperacionRechazadaException;
+import com.challenge.atm.service.service.CajeroService;
+import com.challenge.atm.service.service.MovimientoService;
+import com.challenge.atm.service.service.ResultadoMovimiento;
+import com.challenge.atm.service.service.ResultadoOperacion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CajeroServiceTest {
+class CajeroServiceImplTest {
 
     private static final String TARJETA = "4517660000000001";
     private static final String CUENTA = "1000000001";
@@ -35,7 +39,7 @@ class CajeroServiceTest {
 
     @BeforeEach
     void setUp() {
-        cajeroService = new CajeroService(movimientoService, auditoria);
+        cajeroService = new CajeroServiceImpl(movimientoService, auditoria);
     }
 
     @Test

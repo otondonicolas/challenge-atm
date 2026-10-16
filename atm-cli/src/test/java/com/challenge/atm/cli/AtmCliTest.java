@@ -1,5 +1,8 @@
 package com.challenge.atm.cli;
 
+import com.challenge.atm.cli.client.CajeroClient;
+import com.challenge.atm.cli.exception.OperacionRechazadaException;
+import com.challenge.atm.cli.exception.ServicioNoDisponibleException;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
