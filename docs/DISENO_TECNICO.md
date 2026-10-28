@@ -170,4 +170,4 @@ tarjeta_cuenta(tarjeta FK, cuenta FK, PK(tarjeta, cuenta))
 | Límites | No hay límite de extracción diaria ni por operación. | No estaba especificado; sería configuración por producto. |
 | Seguridad del transporte | HTTP plano en localhost. | En producción, HTTPS/mTLS. |
 | Formato de importe en CLI | Acepta `1500`, `1500,50` o `1500.50`; no acepta separador de miles. | Evita ambigüedad entre `1.500` y `1,500`. |
-| Codificación de consola | Los acentos se muestran bien en una consola interactiva. Si la salida se redirige o captura, puede aparecer `Dep?sito` según la página de códigos. | Depende de la terminal, no de la aplicación. |
+| Codificación de consola | En una consola interactiva el CLI escribe a través de `System.console()`, que usa la página de códigos de la consola (por ejemplo, cp850 en Windows). Así "Depósito exitoso" se ve bien también con Java 8, cuya codificación por defecto no coincide con la de la consola. | Si la salida se redirige a un archivo se usa la codificación por defecto de la JVM; en ese caso depende de quien lea el archivo. |

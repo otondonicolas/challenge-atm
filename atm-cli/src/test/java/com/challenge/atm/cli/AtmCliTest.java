@@ -6,9 +6,11 @@ import com.challenge.atm.cli.exception.ServicioNoDisponibleException;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,8 +23,8 @@ class AtmCliTest {
     private final ClienteFalso cliente = new ClienteFalso();
     private final AtmCli cli;
 
-    AtmCliTest() throws UnsupportedEncodingException {
-        cli = new AtmCli(cliente, new PrintStream(buffer, true, "UTF-8"));
+    AtmCliTest() {
+        cli = new AtmCli(cliente, new PrintWriter(new OutputStreamWriter(buffer, StandardCharsets.UTF_8), true));
     }
 
     private String salida() throws UnsupportedEncodingException {

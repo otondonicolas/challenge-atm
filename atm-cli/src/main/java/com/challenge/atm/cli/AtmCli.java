@@ -11,7 +11,8 @@ import com.challenge.atm.cli.exception.OperacionRechazadaException;
 import com.challenge.atm.cli.exception.ServicioNoDisponibleException;
 import com.challenge.atm.cli.util.FormatoMoneda;
 
-import java.io.PrintStream;
+import java.io.Console;
+import java.io.PrintWriter;
 
 public final class AtmCli {
 
@@ -28,16 +29,21 @@ public final class AtmCli {
             "  atm " + TipoComando.SALDO.getSintaxis());
 
     private final CajeroClient cliente;
-    private final PrintStream salida;
+    private final PrintWriter salida;
 
-    public AtmCli(CajeroClient cliente, PrintStream salida) {
+    public AtmCli(CajeroClient cliente, PrintWriter salida) {
         this.cliente = cliente;
         this.salida = salida;
     }
 
     public static void main(String[] args) {
-        AtmCli cli = new AtmCli(new CajeroClientImpl(Configuracion.desdeEntorno()), System.out);
+        AtmCli cli = new AtmCli(new CajeroClientImpl(Configuracion.desdeEntorno()), salidaEstandar());
         System.exit(cli.ejecutar(args));
+    }
+
+    private static PrintWriter salidaEstandar() {
+        Console consola = System.console();
+        return consola != null ? consola.writer() : new PrintWriter(System.out, true);
     }
 
     public int ejecutar(String[] args) {
