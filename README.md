@@ -12,7 +12,7 @@ Documentación adicional:
 - [Documento técnico de diseño](docs/DISENO_TECNICO.md)
 - [Evidencias de pruebas](docs/EVIDENCIAS_PRUEBAS.md)
 
-**Tiempo invertido:** _completar_ horas.
+**Tiempo invertido:** 2 horas aproximadamente.
 
 ---
 
