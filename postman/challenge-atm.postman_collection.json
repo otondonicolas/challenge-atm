@@ -1,0 +1,425 @@
+{
+  "info": {
+    "name": "Challenge ATM - LINK",
+    "description": "Pruebas del microservicio atm-service contra localhost.\n\n1. Levantar el servicio: `cd atm-service && mvn clean package && java -jar target/atm-service.jar`.\n2. Elegir el environment **ATM - localhost** (o usar la variable `baseUrl` de la colección).\n3. Ejecutar las requests una por una o toda la colección con el **Runner**: cada request tiene tests que validan status y mensaje.\n\nLos datos viven en H2 en memoria: al reiniciar el servicio los saldos vuelven a los valores de `data.sql`. Los flujos de extracción y depósito comparan el saldo antes y después, así que la colección se puede correr varias veces seguidas.\n\nCada request manda un `X-Request-Id` aleatorio, que el servicio devuelve en la respuesta y registra en `logs/transacciones.log`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "tarjetaActiva", "value": "4517660000000001" },
+    { "key": "tarjetaActiva2", "value": "4517660000000002" },
+    { "key": "tarjetaInactiva", "value": "4517660000000003" },
+    { "key": "tarjetaInexistente", "value": "9999999999999999" },
+    { "key": "cuentaPropia", "value": "1000000001" },
+    { "key": "cuentaPropia2", "value": "1000000002" },
+    { "key": "cuentaTercero", "value": "1000000003" },
+    { "key": "cbuTercero", "value": "0170001100000000000003" },
+    { "key": "cuentaTarjetaInactiva", "value": "1000000004" },
+    { "key": "cbuInexistente", "value": "0170001100000000009999" },
+    { "key": "saldoAntes", "value": "" },
+    { "key": "saldoDestinoAntes", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Estado del servicio",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/actuator/health",
+            "description": "Liveness y readiness del servicio."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Servicio UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "1. Login",
+      "item": [
+        {
+          "name": "Login OK - tarjeta activa",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/login",
+            "description": "CLI: `atm login 4517660000000001` -> \"Ingreso exitoso\"."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Ingreso exitoso', () => pm.expect(pm.response.json().mensaje).to.eql('Ingreso exitoso'));",
+            "pm.test('Devuelve transaccionId', () => pm.expect(pm.response.json().transaccionId).to.be.a('string'));",
+            "pm.test('Devuelve el X-Request-Id enviado', () => pm.expect(pm.response.headers.get('X-Request-Id')).to.eql(pm.request.headers.get('X-Request-Id')));"
+          ] } }]
+        },
+        {
+          "name": "Login - tarjeta inactiva",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaInactiva}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/login",
+            "description": "CLI: \"Ingreso no exitoso\"."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+            "pm.test('TARJETA_INACTIVA', () => pm.expect(pm.response.json().codigo).to.eql('TARJETA_INACTIVA'));"
+          ] } }]
+        },
+        {
+          "name": "Login - tarjeta inexistente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaInexistente}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/login",
+            "description": "CLI: \"Ingreso no exitoso\"."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+            "pm.test('TARJETA_INEXISTENTE', () => pm.expect(pm.response.json().codigo).to.eql('TARJETA_INEXISTENTE'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "2. Consulta de saldo",
+      "item": [
+        {
+          "name": "Saldo OK",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaPropia2}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/saldo",
+            "description": "CLI: `atm saldo 4517660000000001 1000000002` -> \"Su saldo es $ 2500,50\" (con los datos iniciales)."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Devuelve la cuenta consultada', () => pm.expect(pm.response.json().cuenta).to.eql(pm.collectionVariables.get('cuentaPropia2')));",
+            "pm.test('Saldo numerico y no negativo', () => pm.expect(pm.response.json().saldo).to.be.a('number').and.to.be.at.least(0));"
+          ] } }]
+        },
+        {
+          "name": "Saldo - cuenta de otra tarjeta",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaTercero}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/saldo",
+            "description": "Una tarjeta no puede consultar una cuenta que no tiene asociada."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+            "pm.test('CUENTA_NO_ASOCIADA', () => pm.expect(pm.response.json().codigo).to.eql('CUENTA_NO_ASOCIADA'));"
+          ] } }]
+        },
+        {
+          "name": "Saldo - tarjeta inactiva",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaInactiva}}\",\n  \"cuenta\": \"{{cuentaTarjetaInactiva}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/saldo"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+            "pm.test('TARJETA_INACTIVA', () => pm.expect(pm.response.json().codigo).to.eql('TARJETA_INACTIVA'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "3. Extraccion",
+      "item": [
+        {
+          "name": "Saldo antes de extraer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaPropia}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/saldo",
+            "description": "Guarda el saldo en `saldoAntes` para validar la extraccion."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('saldoAntes', pm.response.json().saldo);"
+          ] } }]
+        },
+        {
+          "name": "Extraccion OK - $500,50",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaPropia}}\",\n  \"importe\": 500.50\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/extracciones",
+            "description": "CLI: `atm extraer 4517660000000001 1000000001 500,50` -> \"Retire su dinero\"."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Retire su dinero', () => pm.expect(pm.response.json().mensaje).to.eql('Retire su dinero'));"
+          ] } }]
+        },
+        {
+          "name": "Saldo despues de extraer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaPropia}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/saldo"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Se debitaron exactamente $500,50', () => {",
+            "  const esperado = (Number(pm.collectionVariables.get('saldoAntes')) - 500.50).toFixed(2);",
+            "  pm.expect(pm.response.json().saldo.toFixed(2)).to.eql(esperado);",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "Extraccion - saldo insuficiente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaPropia2}}\",\n  \"importe\": 99999999\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/extracciones",
+            "description": "El saldo nunca puede quedar negativo."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+            "pm.test('SALDO_INSUFICIENTE', () => pm.expect(pm.response.json().codigo).to.eql('SALDO_INSUFICIENTE'));"
+          ] } }]
+        },
+        {
+          "name": "Extraccion - cuenta de otra tarjeta",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaTercero}}\",\n  \"importe\": 10\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/extracciones"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+            "pm.test('CUENTA_NO_ASOCIADA', () => pm.expect(pm.response.json().codigo).to.eql('CUENTA_NO_ASOCIADA'));"
+          ] } }]
+        },
+        {
+          "name": "Extraccion - tarjeta inactiva",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaInactiva}}\",\n  \"cuenta\": \"{{cuentaTarjetaInactiva}}\",\n  \"importe\": 10\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/extracciones"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+            "pm.test('TARJETA_INACTIVA', () => pm.expect(pm.response.json().codigo).to.eql('TARJETA_INACTIVA'));"
+          ] } }]
+        },
+        {
+          "name": "Extraccion - importe cero",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaPropia}}\",\n  \"importe\": 0\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/extracciones"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+            "pm.test('IMPORTE_INVALIDO', () => pm.expect(pm.response.json().codigo).to.eql('IMPORTE_INVALIDO'));"
+          ] } }]
+        },
+        {
+          "name": "Extraccion - mas de 2 decimales",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cuenta\": \"{{cuentaPropia}}\",\n  \"importe\": 10.123\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/extracciones"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+            "pm.test('IMPORTE_INVALIDO', () => pm.expect(pm.response.json().codigo).to.eql('IMPORTE_INVALIDO'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "4. Deposito",
+      "item": [
+        {
+          "name": "Saldo del destinatario antes",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva2}}\",\n  \"cuenta\": \"{{cuentaTercero}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/saldo",
+            "description": "Consulta con la tarjeta duena de la cuenta destino y guarda el saldo en `saldoDestinoAntes`."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('saldoDestinoAntes', pm.response.json().saldo);"
+          ] } }]
+        },
+        {
+          "name": "Deposito OK a cuenta de un tercero - $1500",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cbu\": \"{{cbuTercero}}\",\n  \"importe\": 1500\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/depositos",
+            "description": "CLI: `atm depositar 4517660000000001 0170001100000000000003 1500` -> \"Deposito exitoso\". La cuenta destino es de otra tarjeta, como permite el enunciado."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Depósito exitoso', () => pm.expect(pm.response.json().mensaje).to.eql('Depósito exitoso'));"
+          ] } }]
+        },
+        {
+          "name": "Saldo del destinatario despues",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva2}}\",\n  \"cuenta\": \"{{cuentaTercero}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/saldo"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Se acreditaron exactamente $1500', () => {",
+            "  const esperado = (Number(pm.collectionVariables.get('saldoDestinoAntes')) + 1500).toFixed(2);",
+            "  pm.expect(pm.response.json().saldo.toFixed(2)).to.eql(esperado);",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "Deposito - CBU inexistente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cbu\": \"{{cbuInexistente}}\",\n  \"importe\": 10\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/depositos"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+            "pm.test('CBU_INEXISTENTE', () => pm.expect(pm.response.json().codigo).to.eql('CBU_INEXISTENTE'));"
+          ] } }]
+        },
+        {
+          "name": "Deposito - tarjeta inactiva",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaInactiva}}\",\n  \"cbu\": \"{{cbuTercero}}\",\n  \"importe\": 10\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/depositos"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+            "pm.test('TARJETA_INACTIVA', () => pm.expect(pm.response.json().codigo).to.eql('TARJETA_INACTIVA'));"
+          ] } }]
+        },
+        {
+          "name": "Deposito - importe negativo",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cbu\": \"{{cbuTercero}}\",\n  \"importe\": -5\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/depositos"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+            "pm.test('IMPORTE_INVALIDO', () => pm.expect(pm.response.json().codigo).to.eql('IMPORTE_INVALIDO'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "5. Validaciones de entrada",
+      "item": [
+        {
+          "name": "Tarjeta con formato invalido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"45176600ABC\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+            "pm.test('DATOS_INVALIDOS con detalle por campo', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body.codigo).to.eql('DATOS_INVALIDOS');",
+            "  pm.expect(body.detalles).to.be.an('array').that.is.not.empty;",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "CBU con formato invalido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tarjeta\": \"{{tarjetaActiva}}\",\n  \"cbu\": \"123\",\n  \"importe\": 10\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/depositos"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+            "pm.test('DATOS_INVALIDOS', () => pm.expect(pm.response.json().codigo).to.eql('DATOS_INVALIDOS'));"
+          ] } }]
+        },
+        {
+          "name": "Body vacio",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/extracciones"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+            "pm.test('DATOS_INVALIDOS', () => pm.expect(pm.response.json().codigo).to.eql('DATOS_INVALIDOS'));"
+          ] } }]
+        },
+        {
+          "name": "JSON mal formado",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\"tarjeta\": ", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+            "pm.test('DATOS_INVALIDOS', () => pm.expect(pm.response.json().codigo).to.eql('DATOS_INVALIDOS'));"
+          ] } }]
+        },
+        {
+          "name": "Endpoint inexistente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Request-Id", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/v1/cajero/transferencias"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+            "pm.test('RECURSO_INEXISTENTE', () => pm.expect(pm.response.json().codigo).to.eql('RECURSO_INEXISTENTE'));"
+          ] } }]
+        },
+        {
+          "name": "Metodo GET no permitido",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/cajero/login",
+            "description": "Todas las operaciones son POST para que la tarjeta no viaje en la URL."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('405 Method Not Allowed', () => pm.response.to.have.status(405));"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}

@@ -137,6 +137,30 @@ curl -X POST http://localhost:8080/api/v1/cajero/extracciones \
   -d '{"tarjeta":"4517660000000001","cuenta":"1000000002","importe":100.50}'
 ```
 
+## Probar la API con Postman o curl
+
+En [`postman/`](postman) está todo lo necesario para probar el servicio levantado en `localhost:8080`:
+
+| Archivo | Contenido |
+|---|---|
+| [`challenge-atm.postman_collection.json`](postman/challenge-atm.postman_collection.json) | Colección con 27 requests en 6 carpetas: estado, login, saldo, extracción, depósito y validaciones de entrada. Cada request tiene tests que validan el status y el código o mensaje esperado. |
+| [`localhost.postman_environment.json`](postman/localhost.postman_environment.json) | Environment con `baseUrl = http://localhost:8080`. |
+| [`curls.sh`](postman/curls.sh) | Los mismos casos como comandos `curl`, con el resultado esperado de cada uno. |
+
+En Postman: **Import** → arrastrar los dos `.json` → elegir el environment **ATM - localhost** → **Run collection**.
+
+Desde la terminal, sin Postman:
+
+```bash
+npx newman run postman/challenge-atm.postman_collection.json
+```
+
+```bash
+sh postman/curls.sh
+```
+
+Los flujos de extracción y depósito comparan el saldo antes y después de la operación, así que la colección se puede correr varias veces sin reiniciar el servicio.
+
 ## Log transaccional
 
 Archivo `atm-service/logs/transacciones.log` (rotación diaria). Una línea JSON por operación, aprobada o rechazada:
