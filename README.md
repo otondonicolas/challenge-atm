@@ -166,7 +166,7 @@ Los flujos de extracción y depósito comparan el saldo antes y después de la o
 Archivo `atm-service/logs/transacciones.log` (rotación diaria). Una línea JSON por operación, aprobada o rechazada:
 
 ```json
-{"fechaHora":"2026-10-16T20:01:35.85-03:00","transaccionId":"8c4dcca7-...","requestId":"c7505d18-...","operacion":"EXTRACCION","resultado":"APROBADA","tarjeta":"451766******0001","cuenta":"1000000002","importe":500.50,"saldoAnterior":2500.50,"saldoPosterior":2000.00}
+{"fechaHora":"2026-10-28T23:08:52.80-03:00","transaccionId":"3faaf37f-...","requestId":"4089d155-...","operacion":"EXTRACCION","resultado":"APROBADA","tarjeta":"451766******0001","cuenta":"1000000002","importe":500.50,"saldoAnterior":2500.50,"saldoPosterior":2000.00}
 ```
 
 El detalle del formato está en el [documento técnico](docs/DISENO_TECNICO.md#log-transaccional).
