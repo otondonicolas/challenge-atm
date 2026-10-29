@@ -1,6 +1,6 @@
 # Evidencias de pruebas
 
-Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8. Fecha: 2026-10-16.
+Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8, Node.js 24 + Newman 6.2.1. Fecha: 2026-10-28.
 
 ## 1. Tests automatizados
 
@@ -10,8 +10,8 @@ Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8. Fec
 [INFO] Tests run: 3,  Failures: 0, Errors: 0 - AuditoriaTransaccionalIntegrationTest
 [INFO] Tests run: 3,  Failures: 0, Errors: 0 - RegistroTransaccionTest
 [INFO] Tests run: 10, Failures: 0, Errors: 0 - CuentaTest
-[INFO] Tests run: 4,  Failures: 0, Errors: 0 - CajeroServiceImplTest
 [INFO] Tests run: 2,  Failures: 0, Errors: 0 - ConcurrenciaExtraccionTest
+[INFO] Tests run: 4,  Failures: 0, Errors: 0 - CajeroServiceImplTest
 [INFO] Tests run: 24, Failures: 0, Errors: 0 - CajeroControllerIntegrationTest
 [INFO] Tests run: 46, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
@@ -30,9 +30,9 @@ Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8. Fec
 
 ```text
 [INFO] Tests run: 10, Failures: 0, Errors: 0 - AtmCliTest
-[INFO] Tests run: 3,  Failures: 0, Errors: 0 - FormatoMonedaTest
 [INFO] Tests run: 7,  Failures: 0, Errors: 0 - CajeroClientImplTest
 [INFO] Tests run: 22, Failures: 0, Errors: 0 - ParserComandosTest
+[INFO] Tests run: 3,  Failures: 0, Errors: 0 - FormatoMonedaTest
 [INFO] Tests run: 42, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
@@ -49,17 +49,32 @@ Entorno: Windows 11, JDK 20.0.1 (compilando con `--release 8`), Maven 3.9.8. Fec
 Se quitó temporalmente `@Lock(LockModeType.PESSIMISTIC_WRITE)` de `CuentaRepository` y se corrió `ConcurrenciaExtraccionTest` 3 veces:
 
 ```text
-[ERROR] Tests run: 2, Failures: 2 - ConcurrenciaExtraccionTest
-expected: 4500.00
- but was: 5050.00
-expected: 10          <- se aprobaron mas de 10 extracciones de $100 sobre $1000
-[ERROR] Tests run: 2, Failures: 2 - ConcurrenciaExtraccionTest
+== corrida 1
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0
 expected: 4500.00
  but was: 4900.00
-...
+expected: 10
+ but was: 20          <- se aprobaron las 20 extracciones de $100 sobre una cuenta con $1000
+== corrida 2
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0
+expected: 4500.00
+ but was: 5050.00
+expected: 10
+ but was: 20
+== corrida 3
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0
+expected: 4500.00
+ but was: 4900.00
+expected: 10
+ but was: 20
 ```
 
-Sin el bloqueo hay *lost updates*. Con el bloqueo restaurado los 2 tests pasan de forma consistente.
+Sin el bloqueo hay *lost updates* en las 3 corridas. Con el bloqueo restaurado los 2 tests pasan:
+
+```text
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
 
 ## 3. Prueba end-to-end (servicio real + CLI)
 
@@ -144,6 +159,8 @@ Error: cantidad de parametros incorrecta. Uso: atm extraer <tarjeta> <cuenta> <i
 (exit code: 2)
 ```
 
+En los errores de uso (exit code 2) el CLI imprime siempre el bloque `Uso:`; arriba se muestra completo sólo en el primero.
+
 ### Servicio detenido
 
 ```text
@@ -164,21 +181,60 @@ $ curl -i -X POST localhost:8080/api/v1/cajero/saldo -H "Content-Type: applicati
        -H "X-Request-Id: demo-curl-1" -d '{"tarjeta":"4517660000000001","cuenta":"1000000001"}'
 HTTP/1.1 200
 X-Request-Id: demo-curl-1
-{"transaccionId":"4ae1b069-0e3b-4c1d-bdd7-85063357f820","cuenta":"1000000001","saldo":150000.00}
+{"transaccionId":"766bc0a7-a9ee-44c6-bf36-5b2823658a0f","cuenta":"1000000001","saldo":150000.00}
 ```
 
-## 4. Log transaccional generado (`logs/transacciones.log`)
+## 4. Pruebas de la API con Postman (Newman)
 
-Extracto real de la corrida anterior:
+Colección [`postman/challenge-atm.postman_collection.json`](../postman/challenge-atm.postman_collection.json): 27 requests en 6 carpetas (estado del servicio, login, consulta de saldo, extracción, depósito y validaciones de entrada). Cada request valida el status HTTP y el código o mensaje esperado. Los flujos de extracción y depósito consultan el saldo antes y después y verifican que se haya debitado o acreditado exactamente el importe.
+
+```text
+$ npx newman run postman/challenge-atm.postman_collection.json
+
+┌─────────────────────────┬─────────────────┬─────────────────┐
+│                         │        executed │          failed │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              iterations │               1 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│                requests │              27 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│            test-scripts │              27 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│      prerequest-scripts │               0 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              assertions │              54 │               0 │
+├─────────────────────────┴─────────────────┴─────────────────┤
+│ total run duration: 2.4s                                    │
+├─────────────────────────────────────────────────────────────┤
+│ total data received: 2.42kB (approx)                        │
+├─────────────────────────────────────────────────────────────┤
+│ average response time: 6ms [min: 4ms, max: 26ms, s.d.: 5ms] │
+└─────────────────────────────────────────────────────────────┘
+```
+
+| Carpeta | Casos | Resultado esperado y obtenido |
+|---|---|---|
+| 0. Estado del servicio | Health check | 200, `UP` |
+| 1. Login | Tarjeta activa, inactiva, inexistente | 200 `Ingreso exitoso` (con `X-Request-Id` devuelto), 403 `TARJETA_INACTIVA`, 401 `TARJETA_INEXISTENTE` |
+| 2. Consulta de saldo | OK, cuenta de otra tarjeta, tarjeta inactiva | 200 con saldo, 403 `CUENTA_NO_ASOCIADA`, 403 `TARJETA_INACTIVA` |
+| 3. Extracción | Saldo antes → extracción de $500,50 → saldo después; saldo insuficiente, cuenta ajena, tarjeta inactiva, importe 0, 3 decimales | 200 `Retire su dinero` y saldo exactamente $500,50 menor; 422, 403, 403, 400, 400 |
+| 4. Depósito | Saldo destino antes → depósito de $1500 a un tercero → saldo destino después; CBU inexistente, tarjeta inactiva, importe negativo | 200 `Depósito exitoso` y saldo exactamente $1500 mayor; 404, 403, 400 |
+| 5. Validaciones de entrada | Tarjeta y CBU con formato inválido, body vacío, JSON mal formado, endpoint inexistente, GET | 400 `DATOS_INVALIDOS` (con detalle por campo), 404 `RECURSO_INEXISTENTE`, 405 |
+
+La misma batería está en [`postman/curls.sh`](../postman/curls.sh) como comandos `curl`.
+
+## 5. Log transaccional generado (`logs/transacciones.log`)
+
+Extracto real de la corrida de la sección 3:
 
 ```json
-{"fechaHora":"2026-10-16T20:01:33.9937929-03:00","transaccionId":"93cf098d-87fa-4163-a5dd-a9cd96f2a53c","requestId":"ba0b72a9-566e-4df7-8fee-49efcde532b1","operacion":"LOGIN","resultado":"APROBADA","tarjeta":"451766******0001"}
-{"fechaHora":"2026-10-16T20:01:34.4590264-03:00","transaccionId":"6f753529-96dc-4c4e-95f5-3b021356fa41","requestId":"9fb65fe5-1d8c-44f3-aae3-e27db65cc312","operacion":"LOGIN","resultado":"RECHAZADA","codigoError":"TARJETA_INACTIVA","tarjeta":"451766******0003"}
-{"fechaHora":"2026-10-16T20:01:35.8550388-03:00","transaccionId":"8c4dcca7-06f9-40a8-a4c3-25cbcb434601","requestId":"c7505d18-dfb5-41ae-8a85-4f328815ef89","operacion":"EXTRACCION","resultado":"APROBADA","tarjeta":"451766******0001","cuenta":"1000000002","importe":500.50,"saldoAnterior":2500.50,"saldoPosterior":2000.00}
-{"fechaHora":"2026-10-16T20:01:36.724296-03:00","transaccionId":"251837ef-a6c2-4631-89ec-387f44021c35","requestId":"c8f0523a-7c5a-4b1c-bbb0-2e9d0c7acef2","operacion":"EXTRACCION","resultado":"RECHAZADA","codigoError":"SALDO_INSUFICIENTE","tarjeta":"451766******0001","cuenta":"1000000002","importe":999999}
-{"fechaHora":"2026-10-16T20:01:38.0313134-03:00","transaccionId":"95efad66-b931-4efb-8dbb-0c1829388783","requestId":"503cd4f3-94ee-427a-bf75-65069ecb5ecd","operacion":"DEPOSITO","resultado":"APROBADA","tarjeta":"451766******0001","cuenta":"1000000003","cbu":"0170001100000000000003","importe":1500.75,"saldoAnterior":10000.00,"saldoPosterior":11500.75}
-{"fechaHora":"2026-10-16T20:01:38.9187931-03:00","transaccionId":"24822e10-1f8d-4723-81ab-b52cb901cd29","requestId":"3dea1203-4017-4a5e-83d0-3cca6086bd3f","operacion":"DEPOSITO","resultado":"RECHAZADA","codigoError":"CBU_INEXISTENTE","tarjeta":"451766******0001","cbu":"0170001199999999999999","importe":100}
-{"fechaHora":"2026-10-16T20:02:14.2388166-03:00","transaccionId":"4ae1b069-0e3b-4c1d-bdd7-85063357f820","requestId":"demo-curl-1","operacion":"CONSULTA_SALDO","resultado":"APROBADA","tarjeta":"451766******0001","cuenta":"1000000001","saldoAnterior":150000.00,"saldoPosterior":150000.00}
+{"fechaHora":"2026-10-28T23:08:51.0466293-03:00","transaccionId":"73aab64c-a7ad-4e55-8f47-068704b1cd11","requestId":"9e2711e4-820c-47bd-b45e-6df6f9f40c05","operacion":"LOGIN","resultado":"APROBADA","tarjeta":"451766******0001"}
+{"fechaHora":"2026-10-28T23:08:51.49037-03:00","transaccionId":"a436faa5-3232-449d-b1a5-ff8ca2402679","requestId":"63b440a3-aef6-45f6-9712-01a178ce8d0c","operacion":"LOGIN","resultado":"RECHAZADA","codigoError":"TARJETA_INACTIVA","tarjeta":"451766******0003"}
+{"fechaHora":"2026-10-28T23:08:52.8017339-03:00","transaccionId":"3faaf37f-c680-4966-aeff-7ed3a163ec6a","requestId":"4089d155-9258-4f3b-8753-b312d221f736","operacion":"EXTRACCION","resultado":"APROBADA","tarjeta":"451766******0001","cuenta":"1000000002","importe":500.50,"saldoAnterior":2500.50,"saldoPosterior":2000.00}
+{"fechaHora":"2026-10-28T23:08:53.6260881-03:00","transaccionId":"67be0c44-baad-487e-a2d9-d2b4c35737f3","requestId":"1a6ef3bf-6c0c-4060-a03a-7fc37674539a","operacion":"EXTRACCION","resultado":"RECHAZADA","codigoError":"SALDO_INSUFICIENTE","tarjeta":"451766******0001","cuenta":"1000000002","importe":999999}
+{"fechaHora":"2026-10-28T23:08:54.8727807-03:00","transaccionId":"3df3b733-fd93-4c2d-9602-967dd15ea8ef","requestId":"0d92c651-f521-4dce-8787-586318dbd654","operacion":"DEPOSITO","resultado":"APROBADA","tarjeta":"451766******0001","cuenta":"1000000003","cbu":"0170001100000000000003","importe":1500.75,"saldoAnterior":10000.00,"saldoPosterior":11500.75}
+{"fechaHora":"2026-10-28T23:08:55.6798269-03:00","transaccionId":"7ed5e947-9ff0-4f09-822d-165f76bd5099","requestId":"c95af80b-0756-4646-bcaf-fb0961a201ed","operacion":"DEPOSITO","resultado":"RECHAZADA","codigoError":"CBU_INEXISTENTE","tarjeta":"451766******0001","cbu":"0170001199999999999999","importe":100}
+{"fechaHora":"2026-10-28T23:08:57.6883052-03:00","transaccionId":"766bc0a7-a9ee-44c6-bf36-5b2823658a0f","requestId":"demo-curl-1","operacion":"CONSULTA_SALDO","resultado":"APROBADA","tarjeta":"451766******0001","cuenta":"1000000001","saldoAnterior":150000.00,"saldoPosterior":150000.00}
 ```
 
 Verificación de que el PAN completo no aparece en ningún log:
@@ -189,4 +245,4 @@ logs/atm-service.log:0
 logs/transacciones.log:0
 ```
 
-Con estos registros se puede reconstruir el saldo de cada cuenta: el `saldoPosterior` de un movimiento coincide con el `saldoAnterior` del siguiente movimiento de esa misma cuenta (2500,50 → 2000,00 en la cuenta `1000000002`).
+Con estos registros se puede reconstruir el saldo de cada cuenta: el `saldoPosterior` de un movimiento coincide con el `saldoAnterior` del siguiente movimiento de esa misma cuenta (2500,50 → 2000,00 en la cuenta `1000000002`). El `requestId` `demo-curl-1` enviado por curl aparece en el registro, lo que permite correlacionar una llamada del cliente con su auditoría.
