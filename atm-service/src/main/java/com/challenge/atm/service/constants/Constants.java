@@ -42,35 +42,6 @@ public final class Constants {
     public static final String ERROR_SERIALIZANDO_REGISTRO = "No se pudo serializar el registro transaccional {}";
 
     public static final String LOGGER_AUDITORIA = "AUDITORIA_TRANSACCIONAL";
-    public static final String CAMPO_FECHA_HORA = "fechaHora";
-    public static final String CAMPO_TRANSACCION_ID = "transaccionId";
-    public static final String CAMPO_REQUEST_ID = "requestId";
-    public static final String CAMPO_OPERACION = "operacion";
-    public static final String CAMPO_RESULTADO = "resultado";
-    public static final String CAMPO_CODIGO_ERROR = "codigoError";
-    public static final String CAMPO_TARJETA = "tarjeta";
-    public static final String CAMPO_CUENTA = "cuenta";
-    public static final String CAMPO_CBU = "cbu";
-    public static final String CAMPO_IMPORTE = "importe";
-    public static final String CAMPO_SALDO_ANTERIOR = "saldoAnterior";
-    public static final String CAMPO_SALDO_POSTERIOR = "saldoPosterior";
-
-    public static final String TABLA_TARJETA = "tarjeta";
-    public static final String TABLA_CUENTA = "cuenta";
-    public static final String TABLA_TARJETA_CUENTA = "tarjeta_cuenta";
-    public static final String COLUMNA_NUMERO = "numero";
-    public static final String COLUMNA_ACTIVA = "activa";
-    public static final String COLUMNA_CBU = "cbu";
-    public static final String COLUMNA_SALDO = "saldo";
-    public static final String COLUMNA_TARJETA = "tarjeta";
-    public static final String COLUMNA_CUENTA = "cuenta";
-    public static final String TARJETA_ACTIVA = "S";
-    public static final String TARJETA_NO_ACTIVA = "N";
-
-    public static final String PARAMETRO_NUMERO = "numero";
-    public static final String PARAMETRO_CBU = "cbu";
-    public static final String QUERY_CUENTA_POR_NUMERO = "select c from Cuenta c where c.numero = :numero";
-    public static final String QUERY_CUENTA_POR_CBU = "select c from Cuenta c where c.cbu = :cbu";
 
     private Constants() {
     }

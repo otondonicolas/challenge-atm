@@ -1,6 +1,5 @@
 package com.challenge.atm.service.domain;
 
-import com.challenge.atm.service.constants.Constants;
 import com.challenge.atm.service.exception.CodigoError;
 import com.challenge.atm.service.exception.OperacionRechazadaException;
 
@@ -11,19 +10,19 @@ import javax.persistence.Table;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = Constants.TABLA_CUENTA)
+@Table(name = "cuenta")
 public class Cuenta {
 
     private static final int DECIMALES = 2;
 
     @Id
-    @Column(name = Constants.COLUMNA_NUMERO, length = 20)
+    @Column(name = "numero", length = 20)
     private String numero;
 
-    @Column(name = Constants.COLUMNA_CBU, length = 22, nullable = false, unique = true)
+    @Column(name = "cbu", length = 22, nullable = false, unique = true)
     private String cbu;
 
-    @Column(name = Constants.COLUMNA_SALDO, precision = 15, scale = 2, nullable = false)
+    @Column(name = "saldo", precision = 15, scale = 2, nullable = false)
     private BigDecimal saldo;
 
     protected Cuenta() {
