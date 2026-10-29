@@ -32,6 +32,7 @@ Dos proyectos Maven independientes en el mismo repositorio, como pide el enuncia
 | `repository` | Acceso a datos (Spring Data JPA) con bloqueo pesimista | `CuentaRepository`, `TarjetaRepository`, `TarjetaCuentaRepository` |
 | `audit` | Log transaccional | `AuditoriaTransaccional`, `RegistroTransaccion` |
 | `exception` | Catálogo de errores de negocio y **manejo centralizado de excepciones** (`@RestControllerAdvice`) | `CodigoError`, `OperacionRechazadaException`, `GlobalExceptionHandler` |
+| `constants` | Todos los textos del servicio en un solo lugar: mensajes, mensajes de log, rutas, headers, expresiones regulares, nombres de tablas y columnas | `Constants` |
 
 ### atm-cli
 
@@ -44,6 +45,7 @@ Dos proyectos Maven independientes en el mismo repositorio, como pide el enuncia
 | `exception` | `ArgumentosInvalidosException`, `OperacionRechazadaException`, `ServicioNoDisponibleException` | Errores de uso, rechazos del servicio e indisponibilidad o resultado incierto |
 | `config` | `Configuracion` | URL y timeouts por propiedad de sistema o variable de entorno |
 | `util` | `FormatoMoneda` | Formato `$ 99999,99` |
+| `constants` | `Constants` | Todos los textos del CLI: mensajes de consola, errores, rutas, headers y claves de configuración (incluye `ARS = "$ "`) |
 
 ### Interfaces + implementaciones (`Service` / `ServiceImpl`)
 

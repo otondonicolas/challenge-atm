@@ -1,5 +1,7 @@
 package com.challenge.atm.service.domain;
 
+import com.challenge.atm.service.constants.Constants;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -7,16 +9,16 @@ import javax.persistence.IdClass;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "tarjeta_cuenta")
+@Table(name = Constants.TABLA_TARJETA_CUENTA)
 @IdClass(TarjetaCuentaId.class)
 public class TarjetaCuenta {
 
     @Id
-    @Column(name = "tarjeta", length = 19)
+    @Column(name = Constants.COLUMNA_TARJETA, length = 19)
     private String tarjeta;
 
     @Id
-    @Column(name = "cuenta", length = 20)
+    @Column(name = Constants.COLUMNA_CUENTA, length = 20)
     private String cuenta;
 
     protected TarjetaCuenta() {

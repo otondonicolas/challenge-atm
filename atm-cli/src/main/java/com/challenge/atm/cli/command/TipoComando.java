@@ -1,15 +1,16 @@
 package com.challenge.atm.cli.command;
 
+import com.challenge.atm.cli.constants.Constants;
 import com.challenge.atm.cli.exception.ArgumentosInvalidosException;
 
 import java.util.Locale;
 
 public enum TipoComando {
 
-    LOGIN("login", "login <tarjeta>", 1),
-    EXTRAER("extraer", "extraer <tarjeta> <cuenta> <importe>", 3),
-    DEPOSITAR("depositar", "depositar <tarjeta> <cbu> <importe>", 3),
-    SALDO("saldo", "saldo <tarjeta> <cuenta>", 2);
+    LOGIN(Constants.COMANDO_LOGIN, Constants.SINTAXIS_LOGIN, 1),
+    EXTRAER(Constants.COMANDO_EXTRAER, Constants.SINTAXIS_EXTRAER, 3),
+    DEPOSITAR(Constants.COMANDO_DEPOSITAR, Constants.SINTAXIS_DEPOSITAR, 3),
+    SALDO(Constants.COMANDO_SALDO, Constants.SINTAXIS_SALDO, 2);
 
     private final String nombre;
     private final String sintaxis;
@@ -28,7 +29,7 @@ public enum TipoComando {
                 return tipo;
             }
         }
-        throw new ArgumentosInvalidosException("operacion desconocida '" + nombre + "'");
+        throw new ArgumentosInvalidosException(String.format(Constants.OPERACION_DESCONOCIDA, nombre));
     }
 
     public String getSintaxis() {

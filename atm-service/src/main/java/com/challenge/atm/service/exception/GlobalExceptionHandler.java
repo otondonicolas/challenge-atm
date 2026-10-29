@@ -1,5 +1,6 @@
 package com.challenge.atm.service.exception;
 
+import com.challenge.atm.service.constants.Constants;
 import com.challenge.atm.service.web.dto.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OperacionRechazadaException.class)
     public ResponseEntity<ErrorResponse> operacionRechazada(OperacionRechazadaException e) {
-        LOG.info("Operacion rechazada: {}", e.getCodigo());
+        LOG.info(Constants.OPERACION_RECHAZADA, e.getCodigo());
         return respuesta(e.getCodigo(), null);
     }
 
@@ -34,20 +35,20 @@ public class GlobalExceptionHandler {
                 .map(GlobalExceptionHandler::describir)
                 .sorted()
                 .collect(Collectors.toList());
-        LOG.warn("Solicitud invalida: {}", detalles);
+        LOG.warn(Constants.SOLICITUD_INVALIDA, detalles);
         return respuesta(CodigoError.DATOS_INVALIDOS, detalles);
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, HttpMediaTypeNotSupportedException.class})
     public ResponseEntity<ErrorResponse> cuerpoIlegible(Exception e) {
-        LOG.warn("Cuerpo de solicitud ilegible: {}", e.getClass().getSimpleName());
+        LOG.warn(Constants.CUERPO_ILEGIBLE, e.getClass().getSimpleName());
         return respuesta(CodigoError.DATOS_INVALIDOS, null);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> metodoNoSoportado(HttpRequestMethodNotSupportedException e) {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(new ErrorResponse(CodigoError.DATOS_INVALIDOS.name(), "Metodo HTTP no soportado", null));
+                .body(new ErrorResponse(CodigoError.DATOS_INVALIDOS.name(), Constants.METODO_NO_SOPORTADO, null));
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
@@ -57,7 +58,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> errorInesperado(Exception e) {
-        LOG.error("Error inesperado procesando la solicitud", e);
+        LOG.error(Constants.ERROR_INESPERADO, e);
         return respuesta(CodigoError.ERROR_INTERNO, null);
     }
 
@@ -67,6 +68,6 @@ public class GlobalExceptionHandler {
     }
 
     private static String describir(FieldError error) {
-        return error.getField() + ": " + error.getDefaultMessage();
+        return String.format(Constants.DETALLE_CAMPO, error.getField(), error.getDefaultMessage());
     }
 }

@@ -1,8 +1,9 @@
 package com.challenge.atm.cli.config;
 
+import com.challenge.atm.cli.constants.Constants;
+
 public final class Configuracion {
 
-    static final String URL_POR_DEFECTO = "http://localhost:8080";
     static final int CONNECT_TIMEOUT_POR_DEFECTO_MS = 3000;
     static final int READ_TIMEOUT_POR_DEFECTO_MS = 10000;
 
@@ -11,16 +12,16 @@ public final class Configuracion {
     private final int readTimeoutMs;
 
     public Configuracion(String urlServicio, int connectTimeoutMs, int readTimeoutMs) {
-        this.urlServicio = urlServicio.endsWith("/") ? urlServicio.substring(0, urlServicio.length() - 1) : urlServicio;
+        this.urlServicio = urlServicio.endsWith(Constants.BARRA) ? urlServicio.substring(0, urlServicio.length() - 1) : urlServicio;
         this.connectTimeoutMs = connectTimeoutMs;
         this.readTimeoutMs = readTimeoutMs;
     }
 
     public static Configuracion desdeEntorno() {
         return new Configuracion(
-                leer("atm.url", "ATM_SERVICE_URL", URL_POR_DEFECTO),
-                leerEntero("atm.connect-timeout-ms", "ATM_CONNECT_TIMEOUT_MS", CONNECT_TIMEOUT_POR_DEFECTO_MS),
-                leerEntero("atm.read-timeout-ms", "ATM_READ_TIMEOUT_MS", READ_TIMEOUT_POR_DEFECTO_MS));
+                leer(Constants.PROPIEDAD_URL, Constants.VARIABLE_URL, Constants.URL_POR_DEFECTO),
+                leerEntero(Constants.PROPIEDAD_CONNECT_TIMEOUT, Constants.VARIABLE_CONNECT_TIMEOUT, CONNECT_TIMEOUT_POR_DEFECTO_MS),
+                leerEntero(Constants.PROPIEDAD_READ_TIMEOUT, Constants.VARIABLE_READ_TIMEOUT, READ_TIMEOUT_POR_DEFECTO_MS));
     }
 
     private static String leer(String propiedad, String variableEntorno, String porDefecto) {

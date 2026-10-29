@@ -6,6 +6,7 @@ import com.challenge.atm.cli.command.Comando;
 import com.challenge.atm.cli.command.ParserComandos;
 import com.challenge.atm.cli.command.TipoComando;
 import com.challenge.atm.cli.config.Configuracion;
+import com.challenge.atm.cli.constants.Constants;
 import com.challenge.atm.cli.exception.ArgumentosInvalidosException;
 import com.challenge.atm.cli.exception.OperacionRechazadaException;
 import com.challenge.atm.cli.exception.ServicioNoDisponibleException;
@@ -22,11 +23,11 @@ public final class AtmCli {
     public static final int SERVICIO_NO_DISPONIBLE = 3;
 
     private static final String USO = String.join(System.lineSeparator(),
-            "Uso:",
-            "  atm " + TipoComando.LOGIN.getSintaxis(),
-            "  atm " + TipoComando.EXTRAER.getSintaxis(),
-            "  atm " + TipoComando.DEPOSITAR.getSintaxis(),
-            "  atm " + TipoComando.SALDO.getSintaxis());
+            Constants.USO,
+            String.format(Constants.LINEA_USO, TipoComando.LOGIN.getSintaxis()),
+            String.format(Constants.LINEA_USO, TipoComando.EXTRAER.getSintaxis()),
+            String.format(Constants.LINEA_USO, TipoComando.DEPOSITAR.getSintaxis()),
+            String.format(Constants.LINEA_USO, TipoComando.SALDO.getSintaxis()));
 
     private final CajeroClient cliente;
     private final PrintWriter salida;
@@ -51,7 +52,7 @@ public final class AtmCli {
         try {
             comando = ParserComandos.parsear(args);
         } catch (ArgumentosInvalidosException e) {
-            salida.println("Error: " + e.getMessage());
+            salida.println(String.format(Constants.ERROR, e.getMessage()));
             salida.println(USO);
             return USO_INCORRECTO;
         }
@@ -64,9 +65,9 @@ public final class AtmCli {
             return OPERACION_RECHAZADA;
         } catch (ServicioNoDisponibleException e) {
             if (comando.getTipo() == TipoComando.LOGIN) {
-                salida.println("Ingreso no exitoso");
+                salida.println(Constants.INGRESO_NO_EXITOSO);
             }
-            salida.println("Error: " + e.getMessage());
+            salida.println(String.format(Constants.ERROR, e.getMessage()));
             return SERVICIO_NO_DISPONIBLE;
         }
     }
@@ -75,27 +76,27 @@ public final class AtmCli {
         switch (comando.getTipo()) {
             case LOGIN:
                 cliente.login(comando.getTarjeta());
-                return "Ingreso exitoso";
+                return Constants.INGRESO_EXITOSO;
             case EXTRAER:
                 cliente.extraer(comando.getTarjeta(), comando.getCuenta(), comando.getImporte());
-                return "Retire su dinero";
+                return Constants.RETIRE_SU_DINERO;
             case DEPOSITAR:
                 cliente.depositar(comando.getTarjeta(), comando.getCbu(), comando.getImporte());
-                return "Depósito exitoso";
+                return Constants.DEPOSITO_EXITOSO;
             case SALDO:
-                return "Su saldo es " + FormatoMoneda.formatear(cliente.consultarSaldo(comando.getTarjeta(), comando.getCuenta()));
+                return String.format(Constants.SU_SALDO_ES, FormatoMoneda.formatear(cliente.consultarSaldo(comando.getTarjeta(), comando.getCuenta())));
             default:
-                throw new IllegalStateException("Operacion no soportada: " + comando.getTipo());
+                throw new IllegalStateException(String.format(Constants.OPERACION_NO_SOPORTADA_TIPO, comando.getTipo()));
         }
     }
 
     private static String mensajeDeRechazo(Comando comando, OperacionRechazadaException e) {
         if (comando.getTipo() == TipoComando.LOGIN) {
-            return "Ingreso no exitoso";
+            return Constants.INGRESO_NO_EXITOSO;
         }
-        StringBuilder mensaje = new StringBuilder("Error: ").append(e.getMessage());
+        StringBuilder mensaje = new StringBuilder(String.format(Constants.ERROR, e.getMessage()));
         for (String detalle : e.getDetalles()) {
-            mensaje.append(System.lineSeparator()).append("  - ").append(detalle);
+            mensaje.append(System.lineSeparator()).append(String.format(Constants.DETALLE, detalle));
         }
         return mensaje.toString();
     }

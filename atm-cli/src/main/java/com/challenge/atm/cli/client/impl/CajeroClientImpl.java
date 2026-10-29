@@ -1,6 +1,7 @@
 package com.challenge.atm.cli.client.impl;
 
 import com.challenge.atm.cli.client.CajeroClient;
+import com.challenge.atm.cli.constants.Constants;
 import com.challenge.atm.cli.config.Configuracion;
 import com.challenge.atm.cli.exception.OperacionRechazadaException;
 import com.challenge.atm.cli.exception.ServicioNoDisponibleException;
@@ -21,13 +22,6 @@ import java.util.UUID;
 
 public final class CajeroClientImpl implements CajeroClient {
 
-    private static final String RUTA_BASE = "/api/v1/cajero";
-    private static final String HEADER_REQUEST_ID = "X-Request-Id";
-    private static final String MENSAJE_NO_DISPONIBLE = "El servicio no se encuentra disponible. Intente nuevamente mas tarde";
-    private static final String MENSAJE_INCIERTO =
-            "No se pudo confirmar el resultado de la operacion. Consulte su saldo antes de reintentar (referencia %s)";
-    private static final String MENSAJE_RESPUESTA_INVALIDA = "El servicio devolvio una respuesta invalida";
-
     private final Configuracion configuracion;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -37,36 +31,36 @@ public final class CajeroClientImpl implements CajeroClient {
 
     @Override
     public void login(String tarjeta) {
-        ObjectNode cuerpo = objectMapper.createObjectNode().put("tarjeta", tarjeta);
-        post("/login", cuerpo, false);
+        ObjectNode cuerpo = objectMapper.createObjectNode().put(Constants.CAMPO_TARJETA, tarjeta);
+        post(Constants.RUTA_LOGIN, cuerpo, false);
     }
 
     @Override
     public void extraer(String tarjeta, String cuenta, BigDecimal importe) {
         ObjectNode cuerpo = objectMapper.createObjectNode()
-                .put("tarjeta", tarjeta)
-                .put("cuenta", cuenta)
-                .put("importe", importe);
-        post("/extracciones", cuerpo, true);
+                .put(Constants.CAMPO_TARJETA, tarjeta)
+                .put(Constants.CAMPO_CUENTA, cuenta)
+                .put(Constants.CAMPO_IMPORTE, importe);
+        post(Constants.RUTA_EXTRACCIONES, cuerpo, true);
     }
 
     @Override
     public void depositar(String tarjeta, String cbu, BigDecimal importe) {
         ObjectNode cuerpo = objectMapper.createObjectNode()
-                .put("tarjeta", tarjeta)
-                .put("cbu", cbu)
-                .put("importe", importe);
-        post("/depositos", cuerpo, true);
+                .put(Constants.CAMPO_TARJETA, tarjeta)
+                .put(Constants.CAMPO_CBU, cbu)
+                .put(Constants.CAMPO_IMPORTE, importe);
+        post(Constants.RUTA_DEPOSITOS, cuerpo, true);
     }
 
     @Override
     public BigDecimal consultarSaldo(String tarjeta, String cuenta) {
         ObjectNode cuerpo = objectMapper.createObjectNode()
-                .put("tarjeta", tarjeta)
-                .put("cuenta", cuenta);
-        JsonNode saldo = post("/saldo", cuerpo, false).path("saldo");
+                .put(Constants.CAMPO_TARJETA, tarjeta)
+                .put(Constants.CAMPO_CUENTA, cuenta);
+        JsonNode saldo = post(Constants.RUTA_SALDO, cuerpo, false).path(Constants.CAMPO_SALDO);
         if (!saldo.isNumber()) {
-            throw new ServicioNoDisponibleException(MENSAJE_RESPUESTA_INVALIDA, false, null, null);
+            throw new ServicioNoDisponibleException(Constants.RESPUESTA_INVALIDA, false, null, null);
         }
         return saldo.decimalValue();
     }
@@ -76,14 +70,14 @@ public final class CajeroClientImpl implements CajeroClient {
         HttpURLConnection conexion = null;
         boolean solicitudEnviada = false;
         try {
-            conexion = (HttpURLConnection) new URL(configuracion.getUrlServicio() + RUTA_BASE + ruta).openConnection();
-            conexion.setRequestMethod("POST");
+            conexion = (HttpURLConnection) new URL(configuracion.getUrlServicio() + Constants.RUTA_BASE + ruta).openConnection();
+            conexion.setRequestMethod(Constants.METODO_POST);
             conexion.setConnectTimeout(configuracion.getConnectTimeoutMs());
             conexion.setReadTimeout(configuracion.getReadTimeoutMs());
             conexion.setDoOutput(true);
-            conexion.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            conexion.setRequestProperty("Accept", "application/json");
-            conexion.setRequestProperty(HEADER_REQUEST_ID, requestId);
+            conexion.setRequestProperty(Constants.HEADER_CONTENT_TYPE, Constants.CONTENT_TYPE_JSON);
+            conexion.setRequestProperty(Constants.HEADER_ACCEPT, Constants.ACCEPT_JSON);
+            conexion.setRequestProperty(Constants.HEADER_REQUEST_ID, requestId);
             try (OutputStream salida = conexion.getOutputStream()) {
                 objectMapper.writeValue(salida, cuerpo);
             }
@@ -96,9 +90,9 @@ public final class CajeroClientImpl implements CajeroClient {
             throw rechazo(status, respuesta);
         } catch (IOException e) {
             if (solicitudEnviada && modificaSaldo) {
-                throw new ServicioNoDisponibleException(String.format(MENSAJE_INCIERTO, requestId), true, requestId, e);
+                throw new ServicioNoDisponibleException(String.format(Constants.RESULTADO_INCIERTO, requestId), true, requestId, e);
             }
-            throw new ServicioNoDisponibleException(MENSAJE_NO_DISPONIBLE, false, requestId, e);
+            throw new ServicioNoDisponibleException(Constants.SERVICIO_NO_DISPONIBLE, false, requestId, e);
         } finally {
             if (conexion != null) {
                 conexion.disconnect();
@@ -118,10 +112,10 @@ public final class CajeroClientImpl implements CajeroClient {
     }
 
     private static OperacionRechazadaException rechazo(int status, JsonNode respuesta) {
-        String codigo = respuesta.path("codigo").asText("HTTP_" + status);
-        String mensaje = respuesta.path("mensaje").asText("La operacion fue rechazada (HTTP " + status + ")");
+        String codigo = respuesta.path(Constants.CAMPO_CODIGO).asText(String.format(Constants.CODIGO_HTTP, status));
+        String mensaje = respuesta.path(Constants.CAMPO_MENSAJE).asText(String.format(Constants.OPERACION_RECHAZADA_HTTP, status));
         List<String> detalles = new ArrayList<>();
-        for (JsonNode detalle : respuesta.path("detalles")) {
+        for (JsonNode detalle : respuesta.path(Constants.CAMPO_DETALLES)) {
             detalles.add(detalle.asText());
         }
         return new OperacionRechazadaException(status, codigo, mensaje, detalles);

@@ -1,6 +1,7 @@
 package com.challenge.atm.service.web;
 
 import com.challenge.atm.service.IntegracionBase;
+import com.challenge.atm.service.constants.Constants;
 import com.challenge.atm.service.repository.CuentaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -210,10 +211,10 @@ class CajeroControllerIntegrationTest extends IntegracionBase {
     @Test
     void elRequestIdRecibidoSeDevuelveEnLaRespuesta() throws Exception {
         mockMvc.perform(post("/api/v1/cajero/login")
-                        .header(RequestIdFilter.HEADER_REQUEST_ID, "req-123")
+                        .header(Constants.HEADER_REQUEST_ID, "req-123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"tarjeta\":\"" + TARJETA_ACTIVA + "\"}"))
-                .andExpect(header().string(RequestIdFilter.HEADER_REQUEST_ID, "req-123"));
+                .andExpect(header().string(Constants.HEADER_REQUEST_ID, "req-123"));
     }
 
     @Test

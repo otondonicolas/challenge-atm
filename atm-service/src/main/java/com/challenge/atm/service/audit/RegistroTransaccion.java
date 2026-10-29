@@ -1,5 +1,6 @@
 package com.challenge.atm.service.audit;
 
+import com.challenge.atm.service.constants.Constants;
 import com.challenge.atm.service.exception.CodigoError;
 import com.challenge.atm.service.service.ResultadoMovimiento;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -8,8 +9,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.math.BigDecimal;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({"fechaHora", "transaccionId", "requestId", "operacion", "resultado", "codigoError",
-        "tarjeta", "cuenta", "cbu", "importe", "saldoAnterior", "saldoPosterior"})
+@JsonPropertyOrder({Constants.CAMPO_FECHA_HORA, Constants.CAMPO_TRANSACCION_ID, Constants.CAMPO_REQUEST_ID,
+        Constants.CAMPO_OPERACION, Constants.CAMPO_RESULTADO, Constants.CAMPO_CODIGO_ERROR, Constants.CAMPO_TARJETA,
+        Constants.CAMPO_CUENTA, Constants.CAMPO_CBU, Constants.CAMPO_IMPORTE, Constants.CAMPO_SALDO_ANTERIOR,
+        Constants.CAMPO_SALDO_POSTERIOR})
 public final class RegistroTransaccion {
 
     private final String fechaHora;

@@ -1,21 +1,21 @@
 package com.challenge.atm.service.domain;
 
+import com.challenge.atm.service.constants.Constants;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "tarjeta")
+@Table(name = Constants.TABLA_TARJETA)
 public class Tarjeta {
 
-    private static final String ACTIVA = "S";
-
     @Id
-    @Column(name = "numero", length = 19)
+    @Column(name = Constants.COLUMNA_NUMERO, length = 19)
     private String numero;
 
-    @Column(name = "activa", length = 1, nullable = false)
+    @Column(name = Constants.COLUMNA_ACTIVA, length = 1, nullable = false)
     private String activa;
 
     protected Tarjeta() {
@@ -23,7 +23,7 @@ public class Tarjeta {
 
     public Tarjeta(String numero, boolean activa) {
         this.numero = numero;
-        this.activa = activa ? ACTIVA : "N";
+        this.activa = activa ? Constants.TARJETA_ACTIVA : Constants.TARJETA_NO_ACTIVA;
     }
 
     public String getNumero() {
@@ -31,6 +31,6 @@ public class Tarjeta {
     }
 
     public boolean estaActiva() {
-        return ACTIVA.equals(activa);
+        return Constants.TARJETA_ACTIVA.equals(activa);
     }
 }

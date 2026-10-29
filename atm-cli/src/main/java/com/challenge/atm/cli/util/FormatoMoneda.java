@@ -1,5 +1,7 @@
 package com.challenge.atm.cli.util;
 
+import com.challenge.atm.cli.constants.Constants;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -14,9 +16,9 @@ public final class FormatoMoneda {
         DecimalFormatSymbols simbolos = new DecimalFormatSymbols();
         simbolos.setDecimalSeparator(',');
         simbolos.setMinusSign('-');
-        DecimalFormat formato = new DecimalFormat("0.00", simbolos);
+        DecimalFormat formato = new DecimalFormat(Constants.FORMATO_IMPORTE, simbolos);
         formato.setGroupingUsed(false);
         formato.setRoundingMode(RoundingMode.HALF_EVEN);
-        return "$ " + formato.format(importe);
+        return Constants.ARS + formato.format(importe);
     }
 }

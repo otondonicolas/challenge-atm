@@ -1,5 +1,6 @@
 package com.challenge.atm.service.web;
 
+import com.challenge.atm.service.constants.Constants;
 import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -18,21 +19,18 @@ import java.util.regex.Pattern;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestIdFilter extends OncePerRequestFilter {
 
-    public static final String HEADER_REQUEST_ID = "X-Request-Id";
-    public static final String MDC_REQUEST_ID = "requestId";
-
-    private static final Pattern FORMATO_VALIDO = Pattern.compile("[A-Za-z0-9-]{1,64}");
+    private static final Pattern FORMATO_VALIDO = Pattern.compile(Constants.REGEX_REQUEST_ID);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String requestId = resolverRequestId(request.getHeader(HEADER_REQUEST_ID));
-        MDC.put(MDC_REQUEST_ID, requestId);
-        response.setHeader(HEADER_REQUEST_ID, requestId);
+        String requestId = resolverRequestId(request.getHeader(Constants.HEADER_REQUEST_ID));
+        MDC.put(Constants.MDC_REQUEST_ID, requestId);
+        response.setHeader(Constants.HEADER_REQUEST_ID, requestId);
         try {
             chain.doFilter(request, response);
         } finally {
-            MDC.remove(MDC_REQUEST_ID);
+            MDC.remove(Constants.MDC_REQUEST_ID);
         }
     }
 
